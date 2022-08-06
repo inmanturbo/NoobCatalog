@@ -1,27 +1,14 @@
 {{/*
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-`SPDX-License-Identifier: Apache-2.0`
-
-This file is considered to be modified by the TrueCharts Project.
-*/}}
-
-
-{{/*
 Probes selection logic.
 */}}
-{{- define "common.controller.probes" -}}
-{{- $svcPort := .Values.services.main.port.name -}}
+{{- define "tc.common.controller.probes" -}}
+{{- $primaryService := get .Values.service (include "tc.common.lib.util.service.primary" .) -}}
+{{- $primaryPort := "" -}}
+{{- if $primaryService -}}
+  {{- $primaryPort = get $primaryService.ports (include "tc.common.lib.util.service.ports.primary" (dict "serviceName" (include "tc.common.lib.util.service.primary" .) "values" $primaryService)) -}}
+{{- end -}}
+{{- $probeType := "TCP" -}}
+
 {{- range $probeName, $probe := .Values.probes }}
   {{- if $probe.enabled -}}
     {{- "" | nindent 0 }}
@@ -29,12 +16,35 @@ Probes selection logic.
     {{- if $probe.custom -}}
       {{- $probe.spec | toYaml | nindent 2 }}
     {{- else }}
-      {{- "tcpSocket:" | nindent 2 }}
-        {{- printf "port: %v" $svcPort  | nindent 4 }}
-      {{- printf "initialDelaySeconds: %v" $probe.spec.initialDelaySeconds  | nindent 2 }}
-      {{- printf "failureThreshold: %v" $probe.spec.failureThreshold  | nindent 2 }}
-      {{- printf "timeoutSeconds: %v" $probe.spec.timeoutSeconds  | nindent 2 }}
-      {{- printf "periodSeconds: %v" $probe.spec.periodSeconds | nindent 2 }}
+      {{- if and $primaryService $primaryPort -}}
+          {{- if $probe.type -}}
+            {{- if eq $probe.type "AUTO" -}}
+              {{- $probeType = $primaryPort.protocol -}}
+            {{- else -}}
+              {{- $probeType = $probe.type -}}
+            {{- end }}
+          {{- end }}
+
+          {{- if or ( eq $probeType "HTTPS" ) ( eq $probeType "HTTP" ) -}}
+              {{- "httpGet:" | nindent 2 }}
+                {{- printf "path: %v" $probe.path | nindent 4 }}
+                {{- printf "scheme: %v" $probeType | nindent 4 }}
+          {{- else -}}
+            {{- "tcpSocket:" | nindent 2 }}
+          {{- end }}
+
+          {{- if $probe.port }}
+            {{- printf "port: %v" ( tpl ( $probe.port | toString ) $ ) | nindent 4 }}
+          {{- else if $primaryPort.targetPort }}
+            {{- printf "port: %v" $primaryPort.targetPort | nindent 4 }}
+          {{- else}}
+            {{- printf "port: %v" $primaryPort.port | nindent 4 }}
+          {{- end }}
+          {{- printf "initialDelaySeconds: %v" $probe.spec.initialDelaySeconds  | nindent 2 }}
+          {{- printf "failureThreshold: %v" $probe.spec.failureThreshold  | nindent 2 }}
+          {{- printf "timeoutSeconds: %v" $probe.spec.timeoutSeconds  | nindent 2 }}
+          {{- printf "periodSeconds: %v" $probe.spec.periodSeconds | nindent 2 }}
+      {{- end }}
     {{- end }}
   {{- end }}
 {{- end }}

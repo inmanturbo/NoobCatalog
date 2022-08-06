@@ -1,84 +1,71 @@
 {{/*
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-`SPDX-License-Identifier: Apache-2.0`
-
-This file is considered to be modified by the TrueCharts Project.
-*/}}
-
-
-{{/*
 Volumes included by the controller.
 */}}
-{{- define "common.controller.volumes" -}}
+{{- define "tc.common.controller.volumes" -}}
 {{- range $index, $persistence := .Values.persistence }}
 {{- if $persistence.enabled }}
-- name: {{ $index }}
-{{- if $persistence.existingClaim }}
-{{- /* Always prefer an existingClaim if that is set */}}
-  persistentVolumeClaim:
-    claimName: {{ $persistence.existingClaim }}
-{{- else -}}
-  {{- if $persistence.emptyDir -}}
-  {{- /* Always prefer an emptyDir next if that is set */}}
-  emptyDir: {}
-  {{- else -}}
-  {{- /* Otherwise refer to the PVC name */}}
-  persistentVolumeClaim:
-    {{- if $persistence.nameOverride }}
-    claimName: {{ $persistence.nameOverride }}
-    {{- else if $persistence.nameSuffix }}
-    claimName: {{ printf "%s-%s" (include "common.names.fullname" $) $persistence.nameSuffix }}
-    {{- else }}
-    claimName: {{ printf "%s-%s" (include "common.names.fullname" $) $index }}
+- name: {{ tpl ( toString $index ) $ }}
+  {{- if eq (default "pvc" $persistence.type) "pvc" }}
+    {{- $pvcName := (include "tc.common.names.fullname" $) -}}
+    {{- if $persistence.existingClaim }}
+      {{- /* Always prefer an existingClaim if that is set */}}
+      {{- $pvcName = $persistence.existingClaim -}}
+    {{- else -}}
+      {{- /* Otherwise refer to the PVC name */}}
+      {{- if $persistence.nameOverride -}}
+        {{- if not (eq $persistence.nameOverride "-") -}}
+          {{- $pvcName = (printf "%s-%s" (include "tc.common.names.fullname" $) $persistence.nameOverride) -}}
+        {{- end -}}
+      {{- else -}}
+        {{- $pvcName = (printf "%s-%s" (include "tc.common.names.fullname" $) $index) -}}
+      {{- end -}}
+      {{- if $persistence.forceName -}}
+        {{- $pvcName = $persistence.forceName -}}
+      {{- end -}}
     {{- end }}
+  persistentVolumeClaim:
+    claimName: {{ tpl $pvcName $ }}
+  {{- else if eq $persistence.type "emptyDir" }}
+    {{- $emptyDir := dict -}}
+    {{- with $persistence.medium -}}
+      {{- $_ := set $emptyDir "medium" . -}}
+    {{- end -}}
+    {{- with $persistence.sizeLimit -}}
+      {{- $_ := set $emptyDir "sizeLimit" . -}}
+    {{- end }}
+  emptyDir: {{- tpl ( toYaml $emptyDir ) $ | nindent 4 }}
+  {{- else if or (eq $persistence.type "configMap") (eq $persistence.type "secret") }}
+    {{- $objectName := (required (printf "objectName not set for persistence item %s" $index) $persistence.objectName) }}
+    {{- $objectName = tpl $objectName $ }}
+    {{- if eq $persistence.type "configMap" }}
+  configMap:
+    name: {{ $objectName }}
+    {{- else }}
+  secret:
+    secretName: {{ $objectName }}
+    {{- end }}
+    {{- with $persistence.defaultMode }}
+    defaultMode: {{ tpl . $ }}
+    {{- end }}
+    {{- with $persistence.items }}
+    items:
+      {{- tpl ( toYaml . ) $ | nindent 6 }}
+    {{- end }}
+  {{- else if eq $persistence.type "hostPath" }}
+  hostPath:
+    path: {{ required "hostPath not set" $persistence.hostPath }}
+    {{- with $persistence.hostPathType }}
+    type: {{ tpl  . $ }}
+    {{- end }}
+  {{- else if eq $persistence.type "nfs" }}
+  nfs:
+    server: {{ required "server not set" $persistence.server }}
+    path: {{ required "path not set" $persistence.path }}
+  {{- else if eq $persistence.type "custom" }}
+    {{- tpl ( toYaml $persistence.volumeSpec ) $ | nindent 2 }}
+  {{- else }}
+    {{- fail (printf "Not a valid persistence.type (%s)" $persistence.type) }}
   {{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
-
-{{- range $name, $dm := .Values.deviceMounts -}}
-{{ if $dm.enabled }}
-{{ if $dm.name }}
-{{ $name = $dm.name }}
-{{ end }}
-- name: devicemount-{{ $name }}
-  {{ if $dm.emptyDir }}
-  emptyDir: {}
-  {{- else -}}
-  hostPath:
-    path: {{ required "hostPath not set" $dm.devicePath }}
-  {{ end }}
-{{ end }}
-{{- end -}}
-
-{{- range $name, $cs := .Values.customStorage -}}
-{{ if $cs.enabled }}
-{{ if $cs.name }}
-{{ $name = $cs.name }}
-{{ end }}
-- name: customstorage-{{ $name }}
-  {{ if $cs.emptyDir }}
-  emptyDir: {}
-  {{- else -}}
-  hostPath:
-    path: {{ required "hostPath not set" $cs.hostPath }}
-  {{ end }}
-{{ end }}
-{{- end -}}
-
-
-{{- if .Values.additionalVolumes }}
-  {{- toYaml .Values.additionalVolumes | nindent 0 }}
-{{- end }}
-{{- end -}}

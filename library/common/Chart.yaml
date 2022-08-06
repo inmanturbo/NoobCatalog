@@ -1,26 +1,18 @@
 apiVersion: v2
-kubeVersion: ">=1.16.0-0"
-name: common
-version: 3.5.5
-# upstream_version:
-appVersion: none
+appVersion: "latest"
 description: Function library for TrueCharts
-type: library
-deprecated: false
-home: https://github.com/truecharts/apps/tree/master/common
-icon: https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png
+home: https://github.com/truecharts/apps/tree/master/charts/common
+icon: https://avatars.githubusercontent.com/u/76400755
 keywords:
-  - truecharts
-  - library-chart
-  - common
-sources:
-  - https://github.com/truecharts/apps/tree/master/library/common
-# dependencies:
+- truecharts
+- library-chart
+- common
+kubeVersion: '>=1.16.0-0'
 maintainers:
-  - name: TrueCharts
-    email: info@truecharts.org
-    url: truecharts.org
-  - name: Ornias1993
-    email: kjeld@schouten-lebbing.nl
-    url: truecharts.org
-# annotations:
+- email: info@truecharts.org
+  name: TrueCharts
+  url: https://truecharts.org
+name: common
+sources: null
+type: library
+version: 10.4.9

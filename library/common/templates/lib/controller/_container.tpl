@@ -1,92 +1,146 @@
-{{/*
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-`SPDX-License-Identifier: Apache-2.0`
-
-This file is considered to be modified by the TrueCharts Project.
-*/}}
-
-
-{{- /*
-The main container included in the controller.
-*/ -}}
-{{- define "common.controller.mainContainer" -}}
-- name: {{ include "common.names.fullname" . }}
-  image: "{{ include "common.images.image" (dict "imageRoot" .Values.image "global" .Values.global) }}"
+{{- /* The main container included in the controller */ -}}
+{{- define "tc.common.controller.mainContainer" -}}
+- name: {{ include "tc.common.names.fullname" . }}
+  image: {{ include "tc.common.images.selector" . }}
   imagePullPolicy: {{ .Values.image.pullPolicy }}
   {{- with .Values.command }}
-  command: {{ . }}
+  command:
+    {{- if kindIs "string" . }}
+    - {{ tpl . $ }}
+    {{- else }}
+      {{ tpl ( toYaml . ) $ | nindent 4 }}
+    {{- end }}
   {{- end }}
+  {{- if or ( .Values.extraArgs ) ( .Values.args ) }}
+  args:
   {{- with .Values.args }}
-  args: {{ . }}
+    {{- if kindIs "string" . }}
+    - {{ tpl . $ }}
+    {{- else }}
+    {{- tpl ( toYaml . ) $ | nindent 4 }}
+    {{- end }}
+  {{- end }}
+  {{- with .Values.extraArgs }}
+    {{- if kindIs "string" . }}
+    - {{ tpl . $ }}
+    {{- else }}
+    {{- tpl ( toYaml . ) $ | nindent 4 }}
+    {{- end }}
+  {{- end }}
+  {{- end }}
+  {{- with .Values.tty }}
+  tty: {{ . }}
+  {{- end }}
+  {{- with .Values.stdin }}
+  stdin: {{ . }}
   {{- end }}
   {{- with .Values.securityContext }}
   securityContext:
-    {{- toYaml . | nindent 4 }}
+    {{- tpl ( toYaml . ) $ | nindent 4 }}
   {{- end }}
+  {{- with .Values.lifecycle }}
+  lifecycle:
+    {{- tpl ( toYaml . ) $ | nindent 4 }}
+  {{- end }}
+  {{- with .Values.termination.messagePath }}
+  terminationMessagePath: {{ tpl . $ }}
+  {{- end }}
+  {{- with .Values.termination.messagePolicy }}
+  terminationMessagePolicy: {{ tpl . $ }}
+  {{- end }}
+
   env:
     - name: PUID
-      value: {{ .Values.PUID | quote }}
-    - name: PGID
-      value: {{ .Values.PGID | quote }}
+      value: {{ tpl ( toYaml .Values.security.PUID ) $ | quote }}
+    - name: USER_ID
+      value: {{ tpl ( toYaml .Values.security.PUID ) $ | quote }}
+    - name: UID
+      value: {{ tpl ( toYaml .Values.security.PUID ) $ | quote }}
     - name: UMASK
-      value: {{ .Values.UMASK | quote }}
-  {{- if .Values.timezone }}
+      value: {{ tpl ( toYaml .Values.security.UMASK ) $ | quote }}
+    - name: UMASK_SET
+      value: {{ tpl ( toYaml .Values.security.UMASK ) $ | quote }}
+    - name: PGID
+      value: {{ tpl ( toYaml .Values.podSecurityContext.fsGroup ) $ | quote }}
+    - name: GROUP_ID
+      value: {{ tpl ( toYaml .Values.podSecurityContext.fsGroup ) $ | quote }}
+    - name: GID
+      value: {{ tpl ( toYaml .Values.podSecurityContext.fsGroup ) $ | quote }}
+   {{- if or ( .Values.securityContext.readOnlyRootFilesystem ) ( .Values.securityContext.runAsNonRoot ) }}
+    - name: S6_READ_ONLY_ROOT
+      value: "1"
+   {{- end }}
+   {{- if not ( .Values.scaleGPU ) }}
+    - name: NVIDIA_VISIBLE_DEVICES
+      value: "void"
+   {{- else }}
+    - name: NVIDIA_DRIVER_CAPABILITIES
+      value: "all"
+   {{- end }}
     - name: TZ
-      value: {{ .Values.timezone | quote }}
+      value: {{ tpl ( toYaml .Values.TZ ) $ | quote }}
+  {{- with .Values.env }}
+    {{- range $k, $v := . }}
+      {{- $name := $k }}
+      {{- $value := $v }}
+      {{- if kindIs "int" $name }}
+        {{- $name = required "environment variables as a list of maps require a name field" $value.name }}
+      {{- end }}
+    - name: {{ quote $name }}
+      {{- if kindIs "map" $value -}}
+        {{- if hasKey $value "value" }}
+            {{- $value = $value.value -}}
+        {{- else if hasKey $value "valueFrom" }}
+      valueFrom: {{- tpl ( toYaml $value.valueFrom ) $ | nindent 8 }}
+        {{- else }}
+      valueFrom: {{- tpl ( toYaml $value ) $ | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      {{- if not (kindIs "map" $value) }}
+        {{- if kindIs "string" $value }}
+          {{- $value = tpl $value $ }}
+        {{- end }}
+      value: {{ quote $value }}
+      {{- end }}
+    {{- end }}
   {{- end }}
-  {{- if or .Values.env .Values.envTpl .Values.envValueFrom .Values.envVariable .Values.environmentVariables }}
-  {{- range $envVariable := .Values.environmentVariables }}
-  {{- if and $envVariable.name $envVariable.value }}
-    - name: {{ $envVariable.name }}
-      value: {{ $envVariable.value | quote }}
-  {{- else }}
+  {{- range $envList := .Values.envList }}
+    {{- if and $envList.name $envList.value }}
+    - name: {{ $envList.name }}
+      value: {{ $envList.value | quote }}
+    {{- else }}
     {{- fail "Please specify name/value for environment variable" }}
-  {{- end }}
+    {{- end }}
   {{- end}}
-  {{- range $key, $value := .Values.env }}
-    - name: {{ $key }}
-      value: {{ $value | quote }}
-  {{- end }}
-  {{- range $key, $value := .Values.envTpl }}
-    - name: {{ $key }}
-      value: {{ tpl $value $ | quote }}
-  {{- end }}
-  {{- range $key, $value := .Values.envValueFrom }}
-    - name: {{ $key }}
-      valueFrom:
-        {{- $value | toYaml | nindent 8 }}
-  {{- end }}
-  {{- end }}
-  {{- with .Values.envFrom }}
   envFrom:
-    {{- toYaml . | nindent 12 }}
+  {{- if .Values.secretEnv }}
+    - secretRef:
+        name: {{ include "tc.common.names.fullname" . }}
   {{- end }}
-  {{- include "common.controller.ports" . | trim | nindent 2 }}
-
-  {{- with (include "common.controller.volumeMounts" . | trim) }}
+  {{- range .Values.envFrom }}
+  {{- if  .secretRef }}
+    - secretRef:
+        name: {{ tpl .secretRef.name $ | quote }}
+  {{- else if  .configMapRef }}
+    - configMapRef:
+        name: {{ tpl .configMapRef.name $ | quote }}
+  {{- else }}
+  {{- end }}
+  {{- end }}
+  ports:
+  {{- include "tc.common.controller.ports" . | trim | nindent 4 }}
+  {{- with (include "tc.common.controller.volumeMounts" . | trim) }}
   volumeMounts:
-    {{- . | nindent 2 }}
+    {{ nindent 4 . }}
   {{- end }}
-
-
-  {{- include "common.controller.probes" . | nindent 2 }}
+  {{- include "tc.common.controller.probes" . | trim | nindent 2 }}
+  {{/*
+  Merges the TrueNAS SCALE generated GPU info with the .Values.resources dict
+  */}}
+  {{- $resources := dict "limits" ( .Values.scaleGPU | default dict ) }}
+  {{- $resources = merge $resources .Values.resources }}
   resources:
-  {{- with .Values.resources }}
+  {{- with $resources }}
     {{- toYaml . | nindent 4 }}
-  {{- end }}
-  {{- if and .Values.gpuConfiguration }}
-    limits:
-      {{- toYaml .Values.gpuConfiguration | nindent 6 }}
   {{- end }}
 {{- end -}}
