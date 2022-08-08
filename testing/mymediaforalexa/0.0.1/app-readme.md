@@ -1,6 +1,6 @@
-This is the multi-platform Docker image for My Media for Alexa - https://www.mymediaalexa.com .
+This is the multi-platform Docker image for My Media for Alexa.
 
-This App is supplied by TrueCharts, for more information visit the manual: https://truecharts.org/charts/stable/cloudflared
+This App is supplied by TrueCharts, for more information visit the manual: <https://truecharts.org/charts/stable/cloudflared>
 
 ---
 

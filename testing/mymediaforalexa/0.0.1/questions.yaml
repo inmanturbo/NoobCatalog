@@ -805,7 +805,7 @@ questions:
       additional_attrs: true
       type: dict
       attrs:
-        - variable: datadir
+        - variable: data
           label: "App Data Storage"
           description: "Stores the Application Data."
           schema:
@@ -982,7 +982,7 @@ questions:
                                   label: "Value"
                                   schema:
                                     type: string
-        - variable: medialibrary
+        - variable: media
           label: "App Media Library Storage"
           description: "Stores the Application Media."
           schema:
