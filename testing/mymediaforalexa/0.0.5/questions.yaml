@@ -411,7 +411,7 @@ questions:
                                     type: int
                                     default: 52050
                     - variable: web
-                      label: "Sub Service Port Configuration"
+                      label: "Web Service Port Configuration"
                       schema:
                         additional_attrs: true
                         type: dict
