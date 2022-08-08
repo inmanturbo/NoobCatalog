@@ -1290,6 +1290,179 @@ questions:
                                   label: "Value"
                                   schema:
                                     type: string
+  - variable: ingress
+    label: ""
+    group: "Ingress"
+    schema:
+      additional_attrs: true
+      type: dict
+      attrs:
+        - variable: main
+          label: "Main Ingress"
+          schema:
+            additional_attrs: true
+            type: dict
+            attrs:
+              - variable: enabled
+                label: "Enable Ingress"
+                schema:
+                  type: boolean
+                  default: false
+                  show_subquestions_if: true
+                  subquestions:
+                    - variable: hosts
+                      label: "Hosts"
+                      schema:
+                        type: list
+                        default: []
+                        items:
+                          - variable: hostEntry
+                            label: "Host"
+                            schema:
+                              additional_attrs: true
+                              type: dict
+                              attrs:
+                                - variable: host
+                                  label: "HostName"
+                                  schema:
+                                    type: string
+                                    default: ""
+                                    required: true
+                                - variable: paths
+                                  label: "Paths"
+                                  schema:
+                                    type: list
+                                    default: []
+                                    items:
+                                      - variable: pathEntry
+                                        label: "Host"
+                                        schema:
+                                          additional_attrs: true
+                                          type: dict
+                                          attrs:
+                                            - variable: path
+                                              label: "path"
+                                              schema:
+                                                type: string
+                                                required: true
+                                                default: "/"
+                                            - variable: pathType
+                                              label: "pathType"
+                                              schema:
+                                                type: string
+                                                required: true
+                                                default: "Prefix"
+
+                    - variable: tls
+                      label: "TLS-Settings"
+                      schema:
+                        type: list
+                        default: []
+                        items:
+                          - variable: tlsEntry
+                            label: "Host"
+                            schema:
+                              additional_attrs: true
+                              type: dict
+                              attrs:
+                                - variable: hosts
+                                  label: "Certificate Hosts"
+                                  schema:
+                                    type: list
+                                    default: []
+                                    items:
+                                      - variable: host
+                                        label: "Host"
+                                        schema:
+                                          type: string
+                                          default: ""
+                                          required: true
+                                - variable: scaleCert
+                                  label: "Select TrueNAS SCALE Certificate"
+                                  schema:
+                                    type: int
+                                    $ref:
+                                      - "definitions/certificate"
+
+                    - variable: entrypoint
+                      label: "(Advanced) Traefik Entrypoint"
+                      description: "Entrypoint used by Traefik when using Traefik as Ingress Provider"
+                      schema:
+                        type: string
+                        default: "websecure"
+                        required: true
+                    - variable: middlewares
+                      label: "Traefik Middlewares"
+                      description: "Add previously created Traefik Middlewares to this Ingress"
+                      schema:
+                        type: list
+                        default: []
+                        items:
+                          - variable: name
+                            label: "Name"
+                            schema:
+                              type: string
+                              default: ""
+                              required: true
+
+              - variable: expert
+                label: "Show Expert Configuration Options"
+                schema:
+                  type: boolean
+                  default: false
+                  show_subquestions_if: true
+                  subquestions:
+                    - variable: enableFixedMiddlewares
+                      description: "These middlewares enforce a number of best practices."
+                      label: "Enable Default Middlewares"
+                      schema:
+                        type: boolean
+                        default: true
+                    - variable: ingressClassName
+                      label: "IngressClass Name"
+                      schema:
+                        type: string
+                        default: ""
+                    - variable: labelsList
+                      label: "Labels"
+                      schema:
+                        type: list
+                        default: []
+                        items:
+                          - variable: labelItem
+                            label: "Label"
+                            schema:
+                              additional_attrs: true
+                              type: dict
+                              attrs:
+                                - variable: name
+                                  label: "Name"
+                                  schema:
+                                    type: string
+                                - variable: value
+                                  label: "Value"
+                                  schema:
+                                    type: string
+                    - variable: annotationsList
+                      label: "Annotations"
+                      schema:
+                        type: list
+                        default: []
+                        items:
+                          - variable: annotationItem
+                            label: "Label"
+                            schema:
+                              additional_attrs: true
+                              type: dict
+                              attrs:
+                                - variable: name
+                                  label: "Name"
+                                  schema:
+                                    type: string
+                                - variable: value
+                                  label: "Value"
+                                  schema:
+                                    type: string
   - variable: ingressList
     label: "Add Manual Custom Ingresses"
     group: "Ingress"
@@ -1466,6 +1639,7 @@ questions:
                         type: string
                         default: ""
                         required: true
+
   - variable: security
     label: "Container Security Settings"
     group: "Security and Permissions"
@@ -1493,6 +1667,7 @@ questions:
                 schema:
                   type: string
                   default: "002"
+
   - variable: advancedSecurity
     label: "Show Advanced Security Settings"
     group: "Security and Permissions"
@@ -1516,7 +1691,7 @@ questions:
                 label: "ReadOnly Root Filesystem"
                 schema:
                   type: boolean
-                  default: true
+                  default: false
               - variable: allowPrivilegeEscalation
                 label: "Allow Privilege Escalation"
                 schema:
@@ -1526,7 +1701,7 @@ questions:
                 label: "runAsNonRoot"
                 schema:
                   type: boolean
-                  default: true
+                  default: false
               - variable: capabilities
                 label: "Capabilities"
                 schema:
@@ -1553,6 +1728,7 @@ questions:
                             label: ""
                             schema:
                               type: string
+
   - variable: podSecurityContext
     group: "Security and Permissions"
     label: "Pod Security Context"
@@ -1565,19 +1741,19 @@ questions:
           description: "The UserID of the user running the application"
           schema:
             type: int
-            default: 568
+            default: 0
         - variable: runAsGroup
           label: "runAsGroup"
           description: "The groupID this App of the user running the application"
           schema:
             type: int
-            default: 568
+            default: 0
         - variable: fsGroup
           label: "fsGroup"
           description: "The group that should own ALL storage."
           schema:
             type: int
-            default: 568
+            default: 0
         - variable: fsGroupChangePolicy
           label: "When should we take ownership?"
           schema:
@@ -1598,6 +1774,7 @@ questions:
                 label: "supplemental Group"
                 schema:
                   type: int
+
 
   - variable: advancedresources
     label: "Set Custom Resource Limits/Requests (Advanced)"
@@ -1705,6 +1882,7 @@ questions:
       $ref:
         - "definitions/gpuConfiguration"
       attrs: []
+
 #  - variable: autoscaling
 #    group: "Advanced"
 #    label: "(Advanced) Horizontal Pod Autoscaler"
@@ -2111,6 +2289,7 @@ questions:
 #                                              description: "UDP"
 #                                            - value: "SCTP"
 #                                              description: "SCTP"
+
 
   - variable: addons
     group: "Addons"
