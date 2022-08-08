@@ -10,8 +10,6 @@ service:
         protocol: TCP
         targetPort: 52050
         port: 52050
-  sub:
-    ports:
       sub:
         protocol: TCP
         targetPort: 52051
