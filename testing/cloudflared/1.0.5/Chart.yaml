@@ -7,7 +7,7 @@ description: Client for Cloudflare Tunnel, a daemon that exposes private service
 type: application
 deprecated: false
 home: https://github.com/truecharts/charts/tree/master/charts/stable/cloudflared
-icon: https://truecharts.org/img/chart-icons/cloudflared.png
+icon: https://raw.githubusercontent.com/Xstar97/NoobCatalog/main/.imgs/cloudflared.png
 keywords:
   - cloudflared
   - networking
