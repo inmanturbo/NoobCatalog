@@ -10,21 +10,20 @@ service:
   main:
     ports:
       main:
-        protocol: HTTP
         targetPort: 81
         port: 9181
   public_http:
     enabled: true
     ports:
-      public_http:
-        protocol: HTTP
+      sub:
+        enabled: true
         targetPort: 80
         port: 80
   public_https:
     enabled: true
     ports:
-      public_https:
-        protocol: HTTP
+      sub:
+        enabled: true
         targetPort: 443
         port: 443
 
