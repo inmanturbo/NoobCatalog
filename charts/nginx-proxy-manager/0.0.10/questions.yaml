@@ -408,7 +408,7 @@ questions:
                                   schema:
                                     type: int
                                     default: 81
-                    - variable: public_http
+                    - variable: public1
                       label: "Main Service Port Configuration"
                       schema:
                         additional_attrs: true
@@ -461,7 +461,7 @@ questions:
                                   schema:
                                     type: int
                                     default: 80
-                    - variable: public_https
+                    - variable: public2
                       label: "Main Service Port Configuration"
                       schema:
                         additional_attrs: true
