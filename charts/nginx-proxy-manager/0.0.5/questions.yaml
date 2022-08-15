@@ -25,6 +25,8 @@ groups:
     description: Addon Configuration
   - name: Advanced
     description: Advanced Configuration
+  - name: Documentation
+    description: Documentation
 portals:
   open:
     protocols:
@@ -103,16 +105,6 @@ questions:
             default: false
             show_subquestions_if: true
             subquestions:
-              - variable: extraArgs
-                label: Extra Args
-                schema:
-                  type: list
-                  default: []
-                  items:
-                    - variable: arg
-                      label: Arg
-                      schema:
-                        type: string
               - variable: labelsList
                 label: Controller Labels
                 schema:
@@ -153,6 +145,25 @@ questions:
                             label: Value
                             schema:
                               type: string
+  - variable: customextraargs
+    group: Controller
+    label: "Extra Args"
+    description: "Do not click this unless you know what you are doing"
+    schema:
+      type: boolean
+      default: false
+      show_subquestions_if: true
+      subquestions:
+        - variable: extraArgs
+          label: Extra Args
+          schema:
+            type: list
+            default: []
+            items:
+              - variable: arg
+                label: Arg
+                schema:
+                  type: string
   - variable: TZ
     label: Timezone
     group: Container Configuration
@@ -398,7 +409,7 @@ questions:
                                     type: int
                                     default: 81
         - variable: public_http
-          label: "Main Service"
+          label: "Public http Service"
           description: "The Primary service on which the healthcheck runs, often the webUI"
           schema:
             additional_attrs: true
@@ -477,7 +488,7 @@ questions:
                   type: dict
                   attrs:
                     - variable: public_http
-                      label: "Main Service Port Configuration"
+                      label: "Public http Service Port Configuration"
                       schema:
                         additional_attrs: true
                         type: dict
@@ -530,7 +541,7 @@ questions:
                                     type: int
                                     default: 80
         - variable: public_https
-          label: "Main Service"
+          label: "Public https Service"
           description: "The Primary service on which the healthcheck runs, often the webUI"
           schema:
             additional_attrs: true
@@ -936,7 +947,7 @@ questions:
       type: dict
       attrs:
         - variable: data
-          label: "App Config Storage"
+          label: "App Data Storage"
           description: "Stores the Application Configuration."
           schema:
             additional_attrs: true
@@ -979,16 +990,16 @@ questions:
                 schema:
                   show_if: [["type", "=", "simpleHP"]]
                   type: boolean
-                  default: true
+                  default: false
               - variable: setPermissions
                 label: Automatic Permissions
                 description: Automatically set permissions on install
                 schema:
                   show_if: [["type", "=", "hostPath"]]
                   type: boolean
-                  default: true
+                  default: false
               - variable: readOnly
-                label: Read Only"
+                label: Read Only
                 schema:
                   type: boolean
                   default: false
@@ -1111,9 +1122,9 @@ questions:
                                 - variable: value
                                   label: Value
                                   schema:
-                                    type: string                          
+                                    type: string
         - variable: letsencrypt
-          label: "App Config Storage"
+          label: "App LetsEncrypt Storage"
           description: "Stores the Application Configuration."
           schema:
             additional_attrs: true
@@ -1156,16 +1167,16 @@ questions:
                 schema:
                   show_if: [["type", "=", "simpleHP"]]
                   type: boolean
-                  default: true
+                  default: false
               - variable: setPermissions
                 label: Automatic Permissions
                 description: Automatically set permissions on install
                 schema:
                   show_if: [["type", "=", "hostPath"]]
                   type: boolean
-                  default: true
+                  default: false
               - variable: readOnly
-                label: Read Only"
+                label: Read Only
                 schema:
                   type: boolean
                   default: false
@@ -1897,7 +1908,7 @@ questions:
                 label: "runAsNonRoot"
                 schema:
                   type: boolean
-                  default: false
+                  default: true
               - variable: capabilities
                 label: Capabilities
                 schema:
@@ -1936,19 +1947,19 @@ questions:
           description: "The UserID of the user running the application"
           schema:
             type: int
-            default: 0
+            default: 568
         - variable: runAsGroup
           label: "runAsGroup"
           description: "The groupID this App of the user running the application"
           schema:
             type: int
-            default: 0
+            default: 568
         - variable: fsGroup
           label: "fsGroup"
           description: "The group that should own ALL storage."
           schema:
             type: int
-            default: 0
+            default: 568
         - variable: fsGroupChangePolicy
           label: "When should we take ownership?"
           schema:
@@ -2830,3 +2841,27 @@ questions:
                                   schema:
                                     type: string
                                     required: true
+  - variable: docs
+    group: Documentation
+    label: 'Please read the documentation at https://truecharts.org'
+    schema:
+      additional_attrs: true
+      type: dict
+      attrs:
+        - variable: confirmDocs
+          label: 'I have checked the documentation'
+          schema:
+            type: boolean
+            default: true
+#  - variable: donate
+#    group: Documentation
+#    label: 'Please consider supporting TrueCharts, see: https://truecharts.org/docs/about/sponsor'
+#    schema:
+#      additional_attrs: true
+#      type: dict
+#      attrs:
+#        - variable: confirmDonate
+#          label: 'I have considered supporting the project'
+#          schema:
+#            type: boolean
+#            default: true
