@@ -1,0 +1,43 @@
+image:
+  repository: jc21/nginx-proxy-manager
+  pullPolicy: IfNotPresent
+  tag: 2.9.18@sha256:7364018f10033930d25d80db4c418c7c92ae3611569b61ebfeda978f8e51b1cc
+
+securityContext:
+  runAsNonRoot: false
+  readOnlyRootFilesystem: false
+
+podSecurityContext:
+  runAsUser: 0
+  runAsGroup: 0
+
+service:
+  main:
+    ports:
+      main:
+        protocol: HTTP
+        targetPort: 81
+        port: 9181
+  public_http:
+    ports:
+      public_http:
+        protocol: HTTP
+        targetPort: 80
+        port: 80
+  public_https:
+    ports:
+      public_https:
+        protocol: HTTP
+        targetPort: 443
+        port: 443
+
+persistence:
+  data:
+    enabled: true
+    mountPath: "/data"
+  letsencrypt:
+    enabled: true
+    mountPath: "/etc/letsencrypt"
+
+portal:
+  enabled: true
